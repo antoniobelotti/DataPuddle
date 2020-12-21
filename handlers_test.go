@@ -9,6 +9,8 @@ import (
 	"testing"
 )
 
+const BASEURL = "http://localhost:8080/"
+
 func init() {
 	app := App{router: SetUpRouter()}
 	go app.Run(fmt.Sprintf(":%s", "8080"))
@@ -28,18 +30,49 @@ func TestSuite(t *testing.T) {
 }
 
 func (suite *DataPuddleTestSuite) Test_IndexReturns_200_ok() {
-	resp, err := suite.ApiClient.R().Get("http://localhost:8080/")
+	resp, err := suite.ApiClient.R().Get(BASEURL)
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), 200, resp.StatusCode())
 }
 
 func (suite *DataPuddleTestSuite) Test_SessionKeyGenerationIsSuccessful() {
-	resp, err := suite.ApiClient.R().Get("http://localhost:8080/sessionkey")
+	key, err := RequestNewKey()
 	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 32, len(key))
+}
+
+func (suite *DataPuddleTestSuite) Test_PWDWorksWithExistingKey() {
+	key, err := RequestNewKey()
+	assert.Nil(suite.T(), err)
+
+	response, err := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s", BASEURL, "pwd", key))
+	assert.Nil(suite.T(), err)
+	var jsonResponse PWDResponse
+	json.Unmarshal(response.Body(), &jsonResponse)
+
+	assert.Equal(suite.T(), "ok", jsonResponse.Outcome)
+	assert.Equal(suite.T(), "/", jsonResponse.Path)
+}
+
+func (suite *DataPuddleTestSuite) Test_PWDFailsWithNonExistingKey() {
+	key := "scusasetelodicomaseimoltoitaliano"
+	response, err := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s", BASEURL, "pwd", key))
+	assert.Nil(suite.T(), err)
+	var jsonResponse PWDResponse
+	json.Unmarshal(response.Body(), &jsonResponse)
+
+	assert.Equal(suite.T(), "error", jsonResponse.Outcome)
+	assert.Equal(suite.T(), "", jsonResponse.Path)
+}
+
+func RequestNewKey() (string, error) {
+	resp, err := resty.New().R().Get("http://localhost:8080/sessionkey")
+	if err != nil {
+		return "", err
+	}
 
 	var jsonResponse SessionKeyReponse
 	json.Unmarshal(resp.Body(), &jsonResponse)
 
-	assert.Equal(suite.T(), "ok", jsonResponse.Outcome)
-	assert.Equal(suite.T(), 32, len(jsonResponse.Key))
+	return jsonResponse.Key, nil
 }
