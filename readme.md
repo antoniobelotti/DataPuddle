@@ -15,11 +15,15 @@ outcome is a message which can be "error ..." or "ok"
 
 | REQUEST | BODY | RESPONSE |
 |---|---|---|
-| `GET /pwd` | - | `{"outcome": "...", "cwd": "path/cwd"}`|
-| `POST /cd` | `{"path": "pathvalue"}` | `{"outcome": ".."}`|
-| `POST /mkdir` | `{"path":"pathvalue"}` | `{"outcome": ".."}` |
-| `POST /rmdir` | `{"path":"pathvalue"}`| `{"outcome": ".."}` |
-| `POST /store` | `{"filename":"name", "file": {...} }`| `{"outcome": ".."}` |
-| `GET /retrieve` | `{"filename":"name"}` | `{"outcome": "..", "file":{...}}` |
+| `GET /sessionkey` | - | `{"outcome": "...", "key": "..."}`| 
+| `GET /pwd?key={key}` | - | `{"outcome": "...", "cwd": "path/cwd"}`|
+| `GET /cd?key={key}&path={path}` | - | `{"outcome": ".."}`|
+| `GET /mkdir?key={key}&path={path}` | - | `{"outcome": ".."}` |
+| `GET /rmdir?key={key}&path={path}` | - | `{"outcome": ".."}` |
+| `POST /store?key={key}&filename={name}` | jsonfile content `{...}`| `{"outcome": ".."}` |
+| `GET /retrieve?key={key}&filename={name}` | - | `{"outcome": "..", "file":{...}}` |
+
+Each client has to request a session key and include it in every subsequent request. In this way the server can track
+the current working directory for multiple connections. 
 
 Actions `mkdir, rmdir, store, retrieve` have effect in the current working directory.
