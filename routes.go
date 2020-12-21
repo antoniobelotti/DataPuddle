@@ -8,6 +8,8 @@ import (
 func SetUpRouter() *mux.Router {
 	router := mux.NewRouter()
 
+	router.HandleFunc("/sessionkey", SessionKeyHandler).Methods("GET")
+
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
