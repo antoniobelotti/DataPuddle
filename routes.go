@@ -19,6 +19,10 @@ func SetUpRouter() *mux.Router {
 		Methods("GET").
 		Queries("key", "{key}", "path", "{path}")
 
+	router.HandleFunc("/mkdir", MKDIRHandler).
+		Methods("GET").
+		Queries("key", "{key}", "path", "{path}")
+
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})

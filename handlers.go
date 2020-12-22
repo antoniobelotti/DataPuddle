@@ -61,3 +61,19 @@ func CDHandler(w http.ResponseWriter, r *http.Request) {
 	sessions.Add(key, resultingPath)
 	respondWithJSON(w, http.StatusOK, OutcomeResponse{Outcome: "ok"})
 }
+
+func MKDIRHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	key := vars["key"]
+	currentPath := sessions.Get(key)
+	if currentPath == "" {
+		respondWithJSON(w, http.StatusBadRequest, OutcomeResponse{Outcome: "error"})
+		return
+	}
+
+	newDirPath := vars["path"]
+	actualPath := actualPath(filepath.Join(currentPath, newDirPath))
+	os.MkdirAll(actualPath, 0777)
+	respondWithJSON(w, http.StatusOK, OutcomeResponse{Outcome: "ok"})
+}

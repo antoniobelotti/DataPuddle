@@ -167,3 +167,18 @@ func (suite *DataPuddleTestSuite) Test_CDDotDot() {
 	assert.Equal(suite.T(), "ok", jsonResponse.Outcome)
 	assert.Equal(suite.T(), "/test", jsonResponse.Path)
 }
+
+func (suite *DataPuddleTestSuite) Test_MKDIRSuccess() {
+	key, err := RequestNewKey()
+	assert.Nil(suite.T(), err)
+
+	resp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "mkdir", key, "test/sub/"))
+	var jsonResponse OutcomeResponse
+	json.Unmarshal(resp.Body(), &jsonResponse)
+
+	_,err = os.Stat("storage/test/sub")
+	assert.False(suite.T(), os.IsNotExist(err))
+
+	os.RemoveAll("storage/test")
+	assert.Equal(suite.T(), "ok", jsonResponse.Outcome)
+}
