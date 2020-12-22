@@ -27,6 +27,10 @@ func SetUpRouter() *mux.Router {
 		Methods("POST").
 		Queries("key", "{key}", "filename", "{filename}")
 
+	router.HandleFunc("/retrieve", RETRIEVEHandler).
+		Methods("GET").
+		Queries("key", "{key}", "filename", "{filename}")
+
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})

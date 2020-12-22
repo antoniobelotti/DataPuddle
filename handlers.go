@@ -97,15 +97,35 @@ func STOREHandler(w http.ResponseWriter, r *http.Request) {
 
 	absFilePath := filepath.Join(actualPath(currentPath), vars["filename"])
 
-	if _,err := os.Stat(absFilePath); err == nil || os.IsExist(err) {
+	if _, err := os.Stat(absFilePath); err == nil || os.IsExist(err) {
 		// file already exists
 		respondWithJSON(w, http.StatusBadRequest, OutcomeResponse{Outcome: "error"})
 		return
 	}
 
-	if err = ioutil.WriteFile(absFilePath, body, 0777); err!=nil{
+	if err = ioutil.WriteFile(absFilePath, body, 0777); err != nil {
 		respondWithJSON(w, http.StatusBadRequest, OutcomeResponse{Outcome: "error"})
 		return
 	}
 	respondWithJSON(w, http.StatusOK, OutcomeResponse{Outcome: "ok"})
+}
+
+func RETRIEVEHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	key := vars["key"]
+	currentPath := sessions.Get(key)
+	if currentPath == "" {
+		respondWithJSON(w, http.StatusBadRequest, OutcomeResponse{Outcome: "error"})
+		return
+	}
+
+	absFilePath := actualPath(filepath.Join(currentPath, vars["filename"]))
+
+	fileContent, err := ioutil.ReadFile(absFilePath)
+	if err != nil {
+		respondWithJSON(w, http.StatusBadRequest, RetrieveResponse{Outcome: "error"})
+	} else {
+		respondWithJSON(w, http.StatusOK, RetrieveResponse{Outcome: "ok", File: string(fileContent)})
+	}
 }

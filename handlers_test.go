@@ -198,3 +198,33 @@ func (suite *DataPuddleTestSuite) Test_STOREFailsIfFileAlreadyExists() {
 
 	assert.Equal(suite.T(), "error", jsonResponse.Outcome)
 }
+
+func (suite *DataPuddleTestSuite) Test_RETRIEVESuccess() {
+	file, err := ioutil.ReadFile("fixtures/small.json")
+	assert.Nil(suite.T(), err)
+
+	suite.ApiClient.R().SetQueryParam("path", "test/").Get("cd")
+
+	suite.ApiClient.R().
+		SetBody(file).
+		SetQueryParam("filename", "small.json").
+		Post("store")
+
+	resp, _ := suite.ApiClient.R().
+		SetQueryParam("filename", "small.json").
+		Get("retrieve")
+	var jsonResponse RetrieveResponse
+	json.Unmarshal(resp.Body(), &jsonResponse)
+
+	assert.Equal(suite.T(), string(file), jsonResponse.File)
+}
+
+func (suite *DataPuddleTestSuite) Test_RETRIEVEFail() {
+	resp, _ := suite.ApiClient.R().
+		SetQueryParam("filename", "nonexistent.json").
+		Get("retrieve")
+	var jsonResponse RetrieveResponse
+	json.Unmarshal(resp.Body(), &jsonResponse)
+
+	assert.Equal(suite.T(), "error", jsonResponse.Outcome)
+}

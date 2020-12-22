@@ -13,3 +13,8 @@ type PWDResponse struct {
 type OutcomeResponse struct {
 	Outcome string `json:"outcome"`
 }
+
+type RetrieveResponse struct {
+	Outcome string `json:"outcome"`
+	File    string `json:"file"`
+}
