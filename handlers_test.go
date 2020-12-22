@@ -6,6 +6,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"io/ioutil"
 	"os"
 	"testing"
 )
@@ -156,4 +157,37 @@ func (suite *DataPuddleTestSuite) Test_MKDIRSuccess() {
 	assert.False(suite.T(), os.IsNotExist(err))
 
 	assert.Equal(suite.T(), "ok", jsonResponse.Outcome)
+}
+
+func (suite *DataPuddleTestSuite) Test_STORESuccessful() {
+	file, err := ioutil.ReadFile("fixtures/testbig.json")
+	assert.Nil(suite.T(), err)
+
+	suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", suite.apikey, "test"))
+
+	resp, _ := suite.ApiClient.R().
+		SetBody(file).
+		Post(fmt.Sprintf("%s%s?key=%s&filename=%s", BASEURL, "store", suite.apikey, "big.json"))
+	var jsonResponse OutcomeResponse
+	json.Unmarshal(resp.Body(), &jsonResponse)
+
+	assert.Equal(suite.T(), "ok", jsonResponse.Outcome)
+}
+
+func (suite *DataPuddleTestSuite) Test_STOREFailsIfFileAlreadyExists() {
+	suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", suite.apikey, "test"))
+
+	suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", suite.apikey, "test"))
+
+	suite.ApiClient.R().
+		SetBody(`{"username":"testuser"}`).
+		Post(fmt.Sprintf("%s%s?key=%s&filename=%s", BASEURL, "store", suite.apikey, "fail.json"))
+
+	resp, _ := suite.ApiClient.R().
+		SetBody(`{"username":"testuser"}`).
+		Post(fmt.Sprintf("%s%s?key=%s&filename=%s", BASEURL, "store", suite.apikey, "fail.json"))
+	var jsonResponse OutcomeResponse
+	json.Unmarshal(resp.Body(), &jsonResponse)
+
+	assert.Equal(suite.T(), "error", jsonResponse.Outcome)
 }

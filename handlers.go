@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gorilla/mux"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -75,5 +76,36 @@ func MKDIRHandler(w http.ResponseWriter, r *http.Request) {
 	newDirPath := vars["path"]
 	actualPath := actualPath(filepath.Join(currentPath, newDirPath))
 	os.MkdirAll(actualPath, 0777)
+	respondWithJSON(w, http.StatusOK, OutcomeResponse{Outcome: "ok"})
+}
+
+func STOREHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	key := vars["key"]
+	currentPath := sessions.Get(key)
+	if currentPath == "" {
+		respondWithJSON(w, http.StatusBadRequest, OutcomeResponse{Outcome: "error"})
+		return
+	}
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		respondWithJSON(w, http.StatusBadRequest, OutcomeResponse{Outcome: "error"})
+		return
+	}
+
+	absFilePath := filepath.Join(actualPath(currentPath), vars["filename"])
+
+	if _,err := os.Stat(absFilePath); err == nil || os.IsExist(err) {
+		// file already exists
+		respondWithJSON(w, http.StatusBadRequest, OutcomeResponse{Outcome: "error"})
+		return
+	}
+
+	if err = ioutil.WriteFile(absFilePath, body, 0777); err!=nil{
+		respondWithJSON(w, http.StatusBadRequest, OutcomeResponse{Outcome: "error"})
+		return
+	}
 	respondWithJSON(w, http.StatusOK, OutcomeResponse{Outcome: "ok"})
 }

@@ -23,6 +23,10 @@ func SetUpRouter() *mux.Router {
 		Methods("GET").
 		Queries("key", "{key}", "path", "{path}")
 
+	router.HandleFunc("/store", STOREHandler).
+		Methods("POST").
+		Queries("key", "{key}", "filename", "{filename}")
+
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
