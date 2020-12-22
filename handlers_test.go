@@ -30,6 +30,15 @@ func TestSuite(t *testing.T) {
 	suite.Run(t, new(DataPuddleTestSuite))
 }
 
+func (suite *DataPuddleTestSuite) SetupSuite(){
+	os.MkdirAll("storage/test/sub/user", 0777)
+}
+
+func (suite *DataPuddleTestSuite) TearDownSuite(){
+	os.RemoveAll("storage/test")
+}
+
+
 func (suite *DataPuddleTestSuite) Test_IndexReturns_200_ok() {
 	resp, err := suite.ApiClient.R().Get(BASEURL)
 	assert.Nil(suite.T(), err)
@@ -79,9 +88,6 @@ func RequestNewKey() (string, error) {
 }
 
 func (suite *DataPuddleTestSuite) Test_CDIntoOneSubdir() {
-	os.MkdirAll("storage/test", 0777)
-	defer os.RemoveAll("storage/test")
-
 	key, err := RequestNewKey()
 	assert.Nil(suite.T(), err)
 
@@ -99,9 +105,6 @@ func (suite *DataPuddleTestSuite) Test_CDIntoOneSubdir() {
 }
 
 func (suite *DataPuddleTestSuite) Test_CDIntoManySubdir() {
-	os.MkdirAll("storage/test/sub/user", 0777)
-	defer os.RemoveAll("storage/test")
-
 	key, err := RequestNewKey()
 	assert.Nil(suite.T(), err)
 
@@ -119,9 +122,6 @@ func (suite *DataPuddleTestSuite) Test_CDIntoManySubdir() {
 }
 
 func (suite *DataPuddleTestSuite) Test_CDToRoot() {
-	os.MkdirAll("storage/test/sub", 0777)
-	defer os.RemoveAll("storage/test")
-
 	key, err := RequestNewKey()
 	assert.Nil(suite.T(), err)
 
@@ -144,8 +144,6 @@ func (suite *DataPuddleTestSuite) Test_CDToRoot() {
 }
 
 func (suite *DataPuddleTestSuite) Test_CDDotDot() {
-	os.MkdirAll("storage/test/sub", 0777)
-	defer os.RemoveAll("storage/test")
 
 	key, err := RequestNewKey()
 	assert.Nil(suite.T(), err)
@@ -179,6 +177,5 @@ func (suite *DataPuddleTestSuite) Test_MKDIRSuccess() {
 	_,err = os.Stat("storage/test/sub")
 	assert.False(suite.T(), os.IsNotExist(err))
 
-	os.RemoveAll("storage/test")
 	assert.Equal(suite.T(), "ok", jsonResponse.Outcome)
 }
