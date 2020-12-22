@@ -86,7 +86,7 @@ func (suite *DataPuddleTestSuite) Test_CDIntoOneSubdir() {
 	assert.Nil(suite.T(), err)
 
 	CDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", key, "test/"))
-	var jsonCDResp CDResponse
+	var jsonCDResp OutcomeResponse
 	json.Unmarshal(CDResp.Body(), &jsonCDResp)
 	assert.Equal(suite.T(), "ok", jsonCDResp.Outcome)
 
@@ -106,7 +106,7 @@ func (suite *DataPuddleTestSuite) Test_CDIntoManySubdir() {
 	assert.Nil(suite.T(), err)
 
 	CDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", key, "test/sub/user"))
-	var jsonCDResp CDResponse
+	var jsonCDResp OutcomeResponse
 	json.Unmarshal(CDResp.Body(), &jsonCDResp)
 	assert.Equal(suite.T(), "ok", jsonCDResp.Outcome)
 
@@ -126,12 +126,12 @@ func (suite *DataPuddleTestSuite) Test_CDToRoot() {
 	assert.Nil(suite.T(), err)
 
 	CDResp1, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", key, "test/sub/"))
-	var jsonCDResp1 CDResponse
+	var jsonCDResp1 OutcomeResponse
 	json.Unmarshal(CDResp1.Body(), &jsonCDResp1)
 	assert.Equal(suite.T(), "ok", jsonCDResp1.Outcome)
 
 	CDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", key, "/"))
-	var jsonCDResp CDResponse
+	var jsonCDResp OutcomeResponse
 	json.Unmarshal(CDResp.Body(), &jsonCDResp)
 	assert.Equal(suite.T(), "ok", jsonCDResp.Outcome)
 
@@ -151,12 +151,12 @@ func (suite *DataPuddleTestSuite) Test_CDDotDot() {
 	assert.Nil(suite.T(), err)
 
 	CDResp1, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", key, "test/sub/"))
-	var jsonCDResp1 CDResponse
+	var jsonCDResp1 OutcomeResponse
 	json.Unmarshal(CDResp1.Body(), &jsonCDResp1)
 	assert.Equal(suite.T(), "ok", jsonCDResp1.Outcome)
 
 	CDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", key, ".."))
-	var jsonCDResp CDResponse
+	var jsonCDResp OutcomeResponse
 	json.Unmarshal(CDResp.Body(), &jsonCDResp)
 	assert.Equal(suite.T(), "ok", jsonCDResp.Outcome)
 

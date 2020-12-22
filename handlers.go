@@ -37,7 +37,7 @@ func CDHandler(w http.ResponseWriter, r *http.Request) {
 	key := vars["key"]
 	currentPath := sessions.Get(key)
 	if currentPath == "" {
-		respondWithJSON(w, http.StatusBadRequest, CDResponse{Outcome: "error"})
+		respondWithJSON(w, http.StatusBadRequest, OutcomeResponse{Outcome: "error"})
 		return
 	}
 
@@ -54,10 +54,10 @@ func CDHandler(w http.ResponseWriter, r *http.Request) {
 
 	if _, err := os.Stat(actualPath(resultingPath)); os.IsNotExist(err) {
 		// dir does not exist
-		respondWithJSON(w, http.StatusBadRequest, CDResponse{Outcome: "error"})
+		respondWithJSON(w, http.StatusBadRequest, OutcomeResponse{Outcome: "error"})
 		return
 	}
 
 	sessions.Add(key, resultingPath)
-	respondWithJSON(w, http.StatusOK, CDResponse{Outcome: "ok"})
+	respondWithJSON(w, http.StatusOK, OutcomeResponse{Outcome: "ok"})
 }
