@@ -20,24 +20,27 @@ func init() {
 type DataPuddleTestSuite struct {
 	suite.Suite
 	ApiClient *resty.Client
+	apikey    string
 }
 
 func (suite *DataPuddleTestSuite) SetupTest() {
 	suite.ApiClient = resty.New()
+	key, err := RequestNewKey()
+	assert.Nil(suite.T(), err)
+	suite.apikey = key
 }
 
 func TestSuite(t *testing.T) {
 	suite.Run(t, new(DataPuddleTestSuite))
 }
 
-func (suite *DataPuddleTestSuite) SetupSuite(){
+func (suite *DataPuddleTestSuite) SetupSuite() {
 	os.MkdirAll("storage/test/sub/user", 0777)
 }
 
-func (suite *DataPuddleTestSuite) TearDownSuite(){
+func (suite *DataPuddleTestSuite) TearDownSuite() {
 	os.RemoveAll("storage/test")
 }
-
 
 func (suite *DataPuddleTestSuite) Test_IndexReturns_200_ok() {
 	resp, err := suite.ApiClient.R().Get(BASEURL)
@@ -45,18 +48,8 @@ func (suite *DataPuddleTestSuite) Test_IndexReturns_200_ok() {
 	assert.Equal(suite.T(), 200, resp.StatusCode())
 }
 
-func (suite *DataPuddleTestSuite) Test_SessionKeyGenerationIsSuccessful() {
-	key, err := RequestNewKey()
-	assert.Nil(suite.T(), err)
-	assert.Equal(suite.T(), 32, len(key))
-}
-
 func (suite *DataPuddleTestSuite) Test_PWDWorksWithExistingKey() {
-	key, err := RequestNewKey()
-	assert.Nil(suite.T(), err)
-
-	response, err := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s", BASEURL, "pwd", key))
-	assert.Nil(suite.T(), err)
+	response, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s", BASEURL, "pwd", suite.apikey))
 	var jsonResponse PWDResponse
 	json.Unmarshal(response.Body(), &jsonResponse)
 
@@ -88,15 +81,12 @@ func RequestNewKey() (string, error) {
 }
 
 func (suite *DataPuddleTestSuite) Test_CDIntoOneSubdir() {
-	key, err := RequestNewKey()
-	assert.Nil(suite.T(), err)
-
-	CDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", key, "test/"))
+	CDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", suite.apikey, "test/"))
 	var jsonCDResp OutcomeResponse
 	json.Unmarshal(CDResp.Body(), &jsonCDResp)
 	assert.Equal(suite.T(), "ok", jsonCDResp.Outcome)
 
-	PWDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s", BASEURL, "pwd", key))
+	PWDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s", BASEURL, "pwd", suite.apikey))
 	var jsonResponse PWDResponse
 	json.Unmarshal(PWDResp.Body(), &jsonResponse)
 
@@ -105,15 +95,12 @@ func (suite *DataPuddleTestSuite) Test_CDIntoOneSubdir() {
 }
 
 func (suite *DataPuddleTestSuite) Test_CDIntoManySubdir() {
-	key, err := RequestNewKey()
-	assert.Nil(suite.T(), err)
-
-	CDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", key, "test/sub/user"))
+	CDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", suite.apikey, "test/sub/user"))
 	var jsonCDResp OutcomeResponse
 	json.Unmarshal(CDResp.Body(), &jsonCDResp)
 	assert.Equal(suite.T(), "ok", jsonCDResp.Outcome)
 
-	PWDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s", BASEURL, "pwd", key))
+	PWDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s", BASEURL, "pwd", suite.apikey))
 	var jsonResponse PWDResponse
 	json.Unmarshal(PWDResp.Body(), &jsonResponse)
 
@@ -122,20 +109,17 @@ func (suite *DataPuddleTestSuite) Test_CDIntoManySubdir() {
 }
 
 func (suite *DataPuddleTestSuite) Test_CDToRoot() {
-	key, err := RequestNewKey()
-	assert.Nil(suite.T(), err)
-
-	CDResp1, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", key, "test/sub/"))
+	CDResp1, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", suite.apikey, "test/sub/"))
 	var jsonCDResp1 OutcomeResponse
 	json.Unmarshal(CDResp1.Body(), &jsonCDResp1)
 	assert.Equal(suite.T(), "ok", jsonCDResp1.Outcome)
 
-	CDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", key, "/"))
+	CDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", suite.apikey, "/"))
 	var jsonCDResp OutcomeResponse
 	json.Unmarshal(CDResp.Body(), &jsonCDResp)
 	assert.Equal(suite.T(), "ok", jsonCDResp.Outcome)
 
-	PWDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s", BASEURL, "pwd", key))
+	PWDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s", BASEURL, "pwd", suite.apikey))
 	var jsonResponse PWDResponse
 	json.Unmarshal(PWDResp.Body(), &jsonResponse)
 
@@ -145,20 +129,17 @@ func (suite *DataPuddleTestSuite) Test_CDToRoot() {
 
 func (suite *DataPuddleTestSuite) Test_CDDotDot() {
 
-	key, err := RequestNewKey()
-	assert.Nil(suite.T(), err)
-
-	CDResp1, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", key, "test/sub/"))
+	CDResp1, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", suite.apikey, "test/sub/"))
 	var jsonCDResp1 OutcomeResponse
 	json.Unmarshal(CDResp1.Body(), &jsonCDResp1)
 	assert.Equal(suite.T(), "ok", jsonCDResp1.Outcome)
 
-	CDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", key, ".."))
+	CDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", suite.apikey, ".."))
 	var jsonCDResp OutcomeResponse
 	json.Unmarshal(CDResp.Body(), &jsonCDResp)
 	assert.Equal(suite.T(), "ok", jsonCDResp.Outcome)
 
-	PWDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s", BASEURL, "pwd", key))
+	PWDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s", BASEURL, "pwd", suite.apikey))
 	var jsonResponse PWDResponse
 	json.Unmarshal(PWDResp.Body(), &jsonResponse)
 
@@ -167,14 +148,11 @@ func (suite *DataPuddleTestSuite) Test_CDDotDot() {
 }
 
 func (suite *DataPuddleTestSuite) Test_MKDIRSuccess() {
-	key, err := RequestNewKey()
-	assert.Nil(suite.T(), err)
-
-	resp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "mkdir", key, "test/sub/"))
+	resp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "mkdir", suite.apikey, "test/sub/"))
 	var jsonResponse OutcomeResponse
 	json.Unmarshal(resp.Body(), &jsonResponse)
 
-	_,err = os.Stat("storage/test/sub")
+	_, err := os.Stat("storage/test/sub")
 	assert.False(suite.T(), os.IsNotExist(err))
 
 	assert.Equal(suite.T(), "ok", jsonResponse.Outcome)
