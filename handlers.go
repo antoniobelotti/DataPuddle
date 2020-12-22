@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/gorilla/mux"
 	"net/http"
+	"os"
+	"path/filepath"
 )
 
 var sessions Sessions
@@ -27,4 +29,35 @@ func PWDHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		respondWithJSON(w, http.StatusOK, PWDResponse{Outcome: "ok", Path: path})
 	}
+}
+
+func CDHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	key := vars["key"]
+	currentPath := sessions.Get(key)
+	if currentPath == "" {
+		respondWithJSON(w, http.StatusBadRequest, CDResponse{Outcome: "error"})
+		return
+	}
+
+	var resultingPath string
+	receivedPath := vars["path"]
+	switch receivedPath {
+	case "..":
+		resultingPath = filepath.Dir(currentPath)
+	case "/":
+		resultingPath = "/"
+	default:
+		resultingPath = filepath.Join(currentPath, receivedPath)
+	}
+
+	if _, err := os.Stat(actualPath(resultingPath)); os.IsNotExist(err) {
+		// dir does not exist
+		respondWithJSON(w, http.StatusBadRequest, CDResponse{Outcome: "error"})
+		return
+	}
+
+	sessions.Add(key, resultingPath)
+	respondWithJSON(w, http.StatusOK, CDResponse{Outcome: "ok"})
 }

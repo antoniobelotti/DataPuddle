@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
+	"path/filepath"
 	"time"
 )
 
@@ -20,4 +21,8 @@ func respondWithJSON(w http.ResponseWriter, statusCode int, payload interface{})
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	w.Write(response)
+}
+
+func actualPath(logicalPath string) string {
+	return filepath.Join("storage", logicalPath)
 }

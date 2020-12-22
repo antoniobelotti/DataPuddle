@@ -9,3 +9,7 @@ type PWDResponse struct {
 	Outcome string `json:"outcome"`
 	Path    string `json:"path"`
 }
+
+type CDResponse struct {
+	Outcome string `json:"outcome"`
+}

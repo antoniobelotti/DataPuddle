@@ -6,6 +6,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"os"
 	"testing"
 )
 
@@ -75,4 +76,94 @@ func RequestNewKey() (string, error) {
 	json.Unmarshal(resp.Body(), &jsonResponse)
 
 	return jsonResponse.Key, nil
+}
+
+func (suite *DataPuddleTestSuite) Test_CDIntoOneSubdir() {
+	os.MkdirAll("storage/test", 0777)
+	defer os.RemoveAll("storage/test")
+
+	key, err := RequestNewKey()
+	assert.Nil(suite.T(), err)
+
+	CDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", key, "test/"))
+	var jsonCDResp CDResponse
+	json.Unmarshal(CDResp.Body(), &jsonCDResp)
+	assert.Equal(suite.T(), "ok", jsonCDResp.Outcome)
+
+	PWDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s", BASEURL, "pwd", key))
+	var jsonResponse PWDResponse
+	json.Unmarshal(PWDResp.Body(), &jsonResponse)
+
+	assert.Equal(suite.T(), "ok", jsonResponse.Outcome)
+	assert.Equal(suite.T(), "/test", jsonResponse.Path)
+}
+
+func (suite *DataPuddleTestSuite) Test_CDIntoManySubdir() {
+	os.MkdirAll("storage/test/sub/user", 0777)
+	defer os.RemoveAll("storage/test")
+
+	key, err := RequestNewKey()
+	assert.Nil(suite.T(), err)
+
+	CDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", key, "test/sub/user"))
+	var jsonCDResp CDResponse
+	json.Unmarshal(CDResp.Body(), &jsonCDResp)
+	assert.Equal(suite.T(), "ok", jsonCDResp.Outcome)
+
+	PWDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s", BASEURL, "pwd", key))
+	var jsonResponse PWDResponse
+	json.Unmarshal(PWDResp.Body(), &jsonResponse)
+
+	assert.Equal(suite.T(), "ok", jsonResponse.Outcome)
+	assert.Equal(suite.T(), "/test/sub/user", jsonResponse.Path)
+}
+
+func (suite *DataPuddleTestSuite) Test_CDToRoot() {
+	os.MkdirAll("storage/test/sub", 0777)
+	defer os.RemoveAll("storage/test")
+
+	key, err := RequestNewKey()
+	assert.Nil(suite.T(), err)
+
+	CDResp1, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", key, "test/sub/"))
+	var jsonCDResp1 CDResponse
+	json.Unmarshal(CDResp1.Body(), &jsonCDResp1)
+	assert.Equal(suite.T(), "ok", jsonCDResp1.Outcome)
+
+	CDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", key, "/"))
+	var jsonCDResp CDResponse
+	json.Unmarshal(CDResp.Body(), &jsonCDResp)
+	assert.Equal(suite.T(), "ok", jsonCDResp.Outcome)
+
+	PWDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s", BASEURL, "pwd", key))
+	var jsonResponse PWDResponse
+	json.Unmarshal(PWDResp.Body(), &jsonResponse)
+
+	assert.Equal(suite.T(), "ok", jsonResponse.Outcome)
+	assert.Equal(suite.T(), "/", jsonResponse.Path)
+}
+
+func (suite *DataPuddleTestSuite) Test_CDDotDot() {
+	os.MkdirAll("storage/test/sub", 0777)
+	defer os.RemoveAll("storage/test")
+
+	key, err := RequestNewKey()
+	assert.Nil(suite.T(), err)
+
+	CDResp1, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", key, "test/sub/"))
+	var jsonCDResp1 CDResponse
+	json.Unmarshal(CDResp1.Body(), &jsonCDResp1)
+	assert.Equal(suite.T(), "ok", jsonCDResp1.Outcome)
+
+	CDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s&path=%s", BASEURL, "cd", key, ".."))
+	var jsonCDResp CDResponse
+	json.Unmarshal(CDResp.Body(), &jsonCDResp)
+	assert.Equal(suite.T(), "ok", jsonCDResp.Outcome)
+
+	PWDResp, _ := suite.ApiClient.R().Get(fmt.Sprintf("%s/%s?key=%s", BASEURL, "pwd", key))
+	var jsonResponse PWDResponse
+	json.Unmarshal(PWDResp.Body(), &jsonResponse)
+
+	assert.Equal(suite.T(), "ok", jsonResponse.Outcome)
+	assert.Equal(suite.T(), "/test", jsonResponse.Path)
 }
